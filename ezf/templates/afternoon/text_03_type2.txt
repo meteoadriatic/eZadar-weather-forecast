@@ -1,0 +1,1 @@
+Za ${day} prognoziramo ${weather_am}. ${tdiff_txt}Temperatura zraka kretat će se od najnižih ${tmin}°C pa do maksimalne dnevne oko ${tmax}°C.

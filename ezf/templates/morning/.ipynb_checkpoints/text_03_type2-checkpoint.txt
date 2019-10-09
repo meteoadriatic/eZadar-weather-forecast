@@ -1,0 +1,1 @@
+Za ${day} prognoziramo ${weather_am}. Maksimalna dnevna temperatura zraka narasti će na oko ${tmax}°C.

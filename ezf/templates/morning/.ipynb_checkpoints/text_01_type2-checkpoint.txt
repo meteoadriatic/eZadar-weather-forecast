@@ -1,0 +1,1 @@
+Na zadarskom području ${day} će prevladavati ${weather_am}. Temperatura zraka u najtopijem dijelu dana popet će se do oko ${tmax}°C.

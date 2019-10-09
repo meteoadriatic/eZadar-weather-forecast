@@ -1,0 +1,1 @@
+Za ${day} ujutro prognoziramo ${weather_am}, a poslijepodne ${weather_pm}. ${tdiff_txt}Temperatura zraka kretat će se od najnižih ${tmin}°C pa do maksimalne dnevne oko ${tmax}°C.

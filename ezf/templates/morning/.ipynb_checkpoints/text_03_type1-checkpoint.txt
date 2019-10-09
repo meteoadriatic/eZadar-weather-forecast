@@ -1,0 +1,1 @@
+Za ${day} ujutro prognoziramo ${weather_am}, a poslijepodne ${weather_pm}. Maksimalna dnevna temperatura zraka iznosit će oko ${tmax}°C.

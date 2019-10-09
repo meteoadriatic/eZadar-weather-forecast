@@ -1,0 +1,1 @@
+Na zadarskom području ${day} ujutro će prevladavati ${weather_am}. Poslijepodne ${weather_pm}. Najviša dnevna temperatura zraka do oko ${tmax}°C.
