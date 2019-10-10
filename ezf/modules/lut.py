@@ -1,5 +1,6 @@
+
 def weather_lut(pmean, pmax):
-    
+
     wcode = 1
     if pmean['cld'] > 15: wcode = 3
     if pmean['cld'] > 35: wcode = 4

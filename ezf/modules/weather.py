@@ -8,43 +8,49 @@ def degToCompass(num):
     arr = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
     return arr[(val % 8)]
 
+def temp(t, extremum):
+    temp = []
+    if extremum == 'min':
+        p_start = '04:30'
+        p_end = '10:30'
+    else:
+        p_start = '10:30'
+        p_end = '22:30'
+    for i in t:
+        tmp = i.between_time(p_start, p_end).max().astype(int)
+        temp.append(tmp)
+    return temp
 
-def tmin(t):
-    tmin = t.between_time('04:30', '10:30').min().astype(int)
-    return tmin
-
-
-def tmax(t):
-    tmax = t.between_time('10:30', '22:30').max().astype(int)
-    return tmax
-
-
-def wdir_am(u, v):
-    u = u.between_time('04:30', '11:30').mean()
-    v = v.between_time('04:30', '11:30').mean()
-    wdir = (57.3 * np.arctan2(u, v) + 180).astype(int)
-    wdirC = degToCompass(wdir)
+def wdir(u, v, period):
+    wdirC = []
+    if period == 'am':
+        p_start = '05:30'
+        p_end = '12:30'
+    else:
+        p_start = '12:30'
+        p_end = '22:30'
+    for i in (u, v):
+        uu = i[0].between_time(p_start, p_end).mean()
+        vv = i[1].between_time(p_start, p_end).mean()
+        wd = (57.3 * np.arctan2(uu, vv) + 180).astype(int)
+        wC = degToCompass(wd)
+        wdirC.append(wC)
     return wdirC
 
-
-def wdir_pm(u, v):
-    u = u.between_time('12:30', '22:30').mean()
-    v = v.between_time('12:30', '22:30').mean()
-    wdir = (57.3 * np.arctan2(u, v) + 180).astype(int)
-    wdirC = degToCompass(wdir)
-    return wdirC
-
-
-def wspd_am(w):
-    wspd = w.between_time('04:30', '11:30').mean().astype(int)
+def wspd(w, period):
+    wspd = []
+    if period == 'am':
+        p_start = '05:30'
+        p_end = '12:30'
+    else:
+        p_start = '12:30'
+        p_end = '22:30'
+    for i in w:
+        ws = i.between_time(p_start, p_end).min().astype(int)
+        wspd.append(ws)
     return wspd
 
-
-def wspd_pm(w):
-    wspd = w.between_time('12:30', '22:30').mean().astype(int)
-    return wspd
-
-def mapping(wcode):
+def weather_c2t_mapping(wcode):
     '''
         *** Weather type logic ***
 
@@ -91,7 +97,6 @@ def mapping(wcode):
            16: random.choice(['promjenjivo oblačno vrijeme uz mogućnost kratkotrajne kiše i grmljavine',
                               'promjenjivo oblačno vrijeme uz moguć grmljavinski pljusak']), }
     return m[wcode]
-
 
 def tdiff(first_day_tmin, first_day_tmax, second_day_tmin, second_day_tmax):
     tdiff_min = int(second_day_tmin) - int(first_day_tmin)

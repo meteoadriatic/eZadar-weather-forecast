@@ -11,17 +11,16 @@
 # "Afternoon" fcst will contain forecast for next day and day after.
 
 from dotenv import load_dotenv
-import os, locale, random, argparse
+import os, locale, random
 import datetime as dt
 from string import Template
 
+from ezf.modules.argument_parser import argument_parser
 from ezf.modules.read_data import read_csv
-from ezf.modules.dates import get_dates
-from ezf.modules.weather import tmin, tmax, wdir_am, wdir_pm, wspd_am, wspd_pm
+from ezf.modules.dates import get_fdays
+from ezf.modules.weather import temp, wdir, wspd, tdiff, weather_c2t_mapping
 from ezf.modules.lut import weather_lut
-from ezf.modules.weather import mapping
 from ezf.modules.plotting import plot_settings, prepare_data, plot_data
-from ezf.modules.weather import tdiff
 
 load_dotenv()
 root = os.getenv('PROJECT_FOLDER')
@@ -30,85 +29,55 @@ develop = os.getenv('DEVELOP')
 locale.setlocale(locale.LC_ALL, 'hr_HR.UTF-8')
 
 def run():
-    parser = argparse.ArgumentParser(description='Arg parser')
-    parser.add_argument("--forecast",
-                        choices=["morning", "afternoon"],
-                        required=True, type=str, help="Forecast time")
-
-    args = parser.parse_args()
-    forecastt = args.forecast
+    forecastt = argument_parser()
 
     # Fresh file available at https://gamma.meteoadriatic.net/meteoadriatic/homepage/data/Zadar.csv
     df = read_csv(os.path.join(root, 'data/Zadar.csv'))
-    d0, d1, d2 = get_dates()
 
-    # Obtain statistics for requested periods
-    def weather_code(data):
-        weather_am = ''
-        weather_pm = ''
-        periods = [['am', '05:30', '12:30'],
-                   ['pm', '12:30', '22:30']]
-        for period in periods:
-            p_name = period[0]
-            p_start = period[1]
-            p_end = period[2]
-            p_mean = data.between_time(p_start, p_end).mean()
-            p_max = data.between_time(p_start, p_end).max()
+    fday1, fday2 = get_fdays(forecastt)
+    print(fday1, fday2)
 
-            if p_name == 'am': weather_am = mapping(weather_lut(p_mean, p_max))
-            if p_name == 'pm': weather_pm = mapping(weather_lut(p_mean, p_max))
-        return (weather_am, weather_pm)
+    def weather(data, period):
+        wtxt = []
+        if period == 'am':
+            p_start = '05:30'
+            p_end = '12:30'
+        else:
+            p_start = '12:30'
+            p_end = '22:30'
+
+        for i in data:
+            p_mean = i.between_time(p_start, p_end).mean()
+            p_max = i.between_time(p_start, p_end).max()
+            wt = weather_c2t_mapping(weather_lut(p_mean, p_max))
+            wtxt.append(wt)
+
+        return (wtxt)
 
     if forecastt == 'morning':
         day1 = "danas"
-        first_day_tmin = tmin(df.loc[d0]['t2m'])
-        first_day_tmax = tmax(df.loc[d0]['t2m'])
-        first_day_wdir_am = wdir_am(df.loc[d0]['u10'], df.loc[d0]['v10'])
-        first_day_wdir_pm = wdir_pm(df.loc[d0]['u10'], df.loc[d0]['v10'])
-        first_day_wspd_am = wspd_am(df.loc[d0]['wspd'])
-        first_day_wspd_pm = wspd_pm(df.loc[d0]['wspd'])
-        first_day_weather_am = weather_code(df.loc[d0])[0]
-        first_day_weather_pm = weather_code(df.loc[d0])[1]
-
         day2 = "sutra"
-        second_day_tmin = tmin(df.loc[d1]['t2m'])
-        second_day_tmax = tmax(df.loc[d1]['t2m'])
-        second_day_wdir_am = wdir_am(df.loc[d1]['u10'], df.loc[d1]['v10'])
-        second_day_wdir_pm = wdir_pm(df.loc[d1]['u10'], df.loc[d1]['v10'])
-        second_day_wspd_am = wspd_am(df.loc[d1]['wspd'])
-        second_day_wspd_pm = wspd_pm(df.loc[d1]['wspd'])
-        second_day_weather_am = weather_code(df.loc[d1])[0]
-        second_day_weather_pm = weather_code(df.loc[d1])[1]
-
     else:
         day1 = "sutra"
-        first_day_tmin = tmin(df.loc[d1]['t2m'])
-        first_day_tmax = tmax(df.loc[d1]['t2m'])
-        first_day_wdir_am = wdir_am(df.loc[d1]['u10'], df.loc[d1]['v10'])
-        first_day_wdir_pm = wdir_pm(df.loc[d1]['u10'], df.loc[d1]['v10'])
-        first_day_wspd_am = wspd_am(df.loc[d1]['wspd'])
-        first_day_wspd_pm = wspd_pm(df.loc[d1]['wspd'])
-        first_day_weather_am = weather_code(df.loc[d1])[0]
-        first_day_weather_pm = weather_code(df.loc[d1])[1]
-
         day2 = "preksutra"
-        second_day_tmin = tmin(df.loc[d2]['t2m'])
-        second_day_tmax = tmax(df.loc[d2]['t2m'])
-        second_day_wdir_am = wdir_am(df.loc[d2]['u10'], df.loc[d2]['v10'])
-        second_day_wdir_pm = wdir_pm(df.loc[d2]['u10'], df.loc[d2]['v10'])
-        second_day_wspd_am = wspd_am(df.loc[d2]['wspd'])
-        second_day_wspd_pm = wspd_pm(df.loc[d2]['wspd'])
-        second_day_weather_am = weather_code(df.loc[d2])[0]
-        second_day_weather_pm = weather_code(df.loc[d2])[1]
 
-    tdiff_txt = tdiff(first_day_tmin, first_day_tmax, second_day_tmin, second_day_tmax)
+    tmin = temp([df.loc[fday1]['t2m'], df.loc[fday2]['t2m']], 'min')
+    tmax = temp([df.loc[fday1]['t2m'], df.loc[fday2]['t2m']], 'max')
+    wdir_am = wdir([df.loc[fday1]['u10'], df.loc[fday1]['v10']], [df.loc[fday2]['u10'], df.loc[fday2]['u10']], 'am')
+    wdir_pm = wdir([df.loc[fday1]['u10'], df.loc[fday1]['v10']], [df.loc[fday2]['u10'], df.loc[fday2]['u10']], 'pm')
+    wspd_am = wspd([df.loc[fday1]['wspd'], df.loc[fday2]['wspd']], 'am')
+    wspd_pm = wspd([df.loc[fday1]['wspd'], df.loc[fday2]['wspd']], 'pm')
+    weather_am = weather([df.loc[fday1], df.loc[fday2]], 'am')
+    weather_pm = weather([df.loc[fday1], df.loc[fday2]], 'pm')
+
+    tdiff_txt = tdiff(tmin[0], tmax[0], tmin[1], tmax[1])
 
 
     ### FIRST DAY ###
     #################
     template_dir = os.path.join(os.path.join(root, 'templates'), forecastt)
 
-    if first_day_weather_am != first_day_weather_pm:
+    if weather_am[0] != weather_pm[0]:
         ttype = 'type1.txt'
     else:
         ttype = 'type2.txt'
@@ -128,25 +97,26 @@ def run():
 
     if forecastt == 'morning':
         forecast_first_day = t.substitute(day=day1,
-                                         weather_am=first_day_weather_am,
-                                         weather_pm=first_day_weather_pm,
-                                         tmax=first_day_tmax)
+                                         weather_am=weather_am[0],
+                                         weather_pm=weather_pm[0],
+                                         tmax=tmax[0])
     else:
         forecast_first_day = t.substitute(day=day1,
-                                         weather_am=first_day_weather_am,
-                                         weather_pm=first_day_weather_pm,
+                                         weather_am=weather_am[0],
+                                         weather_pm=weather_pm[0],
                                          tdiff_txt='',
-                                         tmin=first_day_tmin,
-                                         tmax=first_day_tmax)
+                                         tmin=tmin[0],
+                                         tmax=tmax[0])
 
-    forecast_first_day = ''.join(forecast_first_day.rsplit(' vrijeme', 1))
+    forecast_first_day = ''.join(forecast_first_day.rsplit(' vrijeme', 1)) # avoid duplicate " vrijeme" string
+    forecast_first_day = forecast_first_day[0].upper() + forecast_first_day[1:] # capitalize first letter
 
     ### SECOND DAY ###
     ##################
     # Note: For second day we always use "afternoon" template type
     template_dir = os.path.join(os.path.join(root, 'templates'), 'afternoon')
 
-    if second_day_weather_am != second_day_weather_pm:
+    if weather_am[1] != weather_pm[1]:
         ttype = 'type1.txt'
     else:
         ttype = 'type2.txt'
@@ -169,20 +139,17 @@ def run():
     t = Template(content)
 
     forecast_second_day = t.substitute(day=day2,
-                                      weather_am=second_day_weather_am,
-                                      weather_pm=second_day_weather_pm,
+                                      weather_am=weather_am[1],
+                                      weather_pm=weather_pm[1],
                                       tdiff_txt=tdiff_txt,
-                                      tmin=second_day_tmin,
-                                      tmax=second_day_tmax)
+                                      tmin=tmin[1],
+                                      tmax=tmax[1])
 
-    forecast_second_day = ''.join(forecast_second_day.rsplit(' vrijeme', 1))
+    forecast_second_day = ''.join(forecast_second_day.rsplit(' vrijeme', 1)) # avoid duplicate " vrijeme" string
+    forecast_second_day = forecast_second_day[0].upper() + forecast_second_day[1:] # capitalize first letter
 
-    if forecastt == 'morning':
-        date1 = (dt.datetime.strptime(d0, "%Y-%m-%d")).strftime("%e.%m.%Y. (%A)").strip()
-        date2 = (dt.datetime.strptime(d1, "%Y-%m-%d")).strftime("%e.%m.%Y. (%A)").strip()
-    else:
-        date1 = (dt.datetime.strptime(d1, "%Y-%m-%d")).strftime("%e.%m.%Y. (%A)").strip()
-        date2 = (dt.datetime.strptime(d2, "%Y-%m-%d")).strftime("%e.%m.%Y. (%A)").strip()
+    date1 = (dt.datetime.strptime(fday1, "%Y-%m-%d")).strftime("%e.%m.%Y. (%A)").strip()
+    date2 = (dt.datetime.strptime(fday2, "%Y-%m-%d")).strftime("%e.%m.%Y. (%A)").strip()
 
     intro = "Vremenska prognoza za Zadar"
     outro = "Računalno generirana prognoza by meteoadriatic.net"

@@ -1,9 +1,15 @@
-def get_dates():
+import datetime as dt
+from datetime import timedelta
+
+def get_fdays(forecastt):
     import datetime as dt
     from datetime import timedelta
 
-    d0 = dt.datetime.today().strftime("%Y-%m-%d")
-    d1 = (dt.datetime.strptime(d0, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
-    d2 = (dt.datetime.strptime(d0, "%Y-%m-%d") + timedelta(days=2)).strftime("%Y-%m-%d")
+    if forecastt == 'morning':
+        fday1 = dt.datetime.today().strftime("%Y-%m-%d")
+        fday2 = (dt.datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        fday1 = (dt.datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+        fday2 = (dt.datetime.today() + timedelta(days=2)).strftime("%Y-%m-%d")
 
-    return d0, d1, d2
+    return fday1, fday2
