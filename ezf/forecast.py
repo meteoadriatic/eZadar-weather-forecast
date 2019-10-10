@@ -61,14 +61,16 @@ def run():
         day1 = "sutra"
         day2 = "preksutra"
 
-    tmin = temp([df.loc[fday1]['t2m'], df.loc[fday2]['t2m']], 'min')
-    tmax = temp([df.loc[fday1]['t2m'], df.loc[fday2]['t2m']], 'max')
-    wdir_am = wdir([df.loc[fday1]['u10'], df.loc[fday1]['v10']], [df.loc[fday2]['u10'], df.loc[fday2]['u10']], 'am')
-    wdir_pm = wdir([df.loc[fday1]['u10'], df.loc[fday1]['v10']], [df.loc[fday2]['u10'], df.loc[fday2]['u10']], 'pm')
-    wspd_am = wspd([df.loc[fday1]['wspd'], df.loc[fday2]['wspd']], 'am')
-    wspd_pm = wspd([df.loc[fday1]['wspd'], df.loc[fday2]['wspd']], 'pm')
-    weather_am = weather([df.loc[fday1], df.loc[fday2]], 'am')
-    weather_pm = weather([df.loc[fday1], df.loc[fday2]], 'pm')
+    fdays=[fday1, fday2]
+
+    tmin = temp([df.loc[i]['t2m'] for i in fdays], 'min')
+    tmax = temp([df.loc[i]['t2m'] for i in fdays], 'max')
+    wdir_am = wdir([df.loc[i]['u10'] for i in fdays], [df.loc[i]['v10'] for i in fdays], 'am')
+    wdir_pm = wdir([df.loc[i]['u10'] for i in fdays], [df.loc[i]['v10'] for i in fdays], 'pm')
+    wspd_am = wspd([df.loc[i]['wspd'] for i in fdays], 'am')
+    wspd_pm = wspd([df.loc[i]['wspd'] for i in fdays], 'pm')
+    weather_am = weather([df.loc[i] for i in fdays], 'am')
+    weather_pm = weather([df.loc[i] for i in fdays], 'pm')
 
     tdiff_txt = tdiff(tmin[0], tmax[0], tmin[1], tmax[1])
 
