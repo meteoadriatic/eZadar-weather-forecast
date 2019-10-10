@@ -10,8 +10,7 @@
 #
 # "Afternoon" fcst will contain forecast for next day and day after.
 
-develop = True
-
+from dotenv import load_dotenv
 import os, locale, random, argparse
 import datetime as dt
 from string import Template
@@ -19,13 +18,18 @@ from string import Template
 from ezf.modules.read_data import read_csv
 from ezf.modules.dates import get_dates
 from ezf.modules.weather import tmin, tmax, wdir_am, wdir_pm, wspd_am, wspd_pm
+from ezf.modules.lut import weather_lut
 from ezf.modules.weather import mapping
 from ezf.modules.plotting import plot_settings, prepare_data, plot_data
 from ezf.modules.weather import tdiff
 
+load_dotenv()
+root = os.getenv('PROJECT_FOLDER')
+develop = os.getenv('DEVELOP')
+
 locale.setlocale(locale.LC_ALL, 'hr_HR.UTF-8')
 
-def main():
+def run():
     parser = argparse.ArgumentParser(description='Arg parser')
     parser.add_argument("--forecast",
                         choices=["morning", "afternoon"],
@@ -33,11 +37,6 @@ def main():
 
     args = parser.parse_args()
     forecastt = args.forecast
-
-    if develop:
-        root = "ezf"
-    else:
-        root = "/home/maps/ezadar/ezf"
 
     # Fresh file available at https://gamma.meteoadriatic.net/meteoadriatic/homepage/data/Zadar.csv
     df = read_csv(os.path.join(root, 'data/Zadar.csv'))
@@ -56,7 +55,6 @@ def main():
             p_mean = data.between_time(p_start, p_end).mean()
             p_max = data.between_time(p_start, p_end).max()
 
-            from ezf.modules.lut import weather_lut
             if p_name == 'am': weather_am = mapping(weather_lut(p_mean, p_max))
             if p_name == 'pm': weather_pm = mapping(weather_lut(p_mean, p_max))
         return (weather_am, weather_pm)
@@ -129,19 +127,19 @@ def main():
     t = Template(content)
 
     if forecastt == 'morning':
-        forecast_firstDay = t.substitute(day=day1,
+        forecast_first_day = t.substitute(day=day1,
                                          weather_am=first_day_weather_am,
                                          weather_pm=first_day_weather_pm,
                                          tmax=first_day_tmax)
     else:
-        forecast_firstDay = t.substitute(day=day1,
+        forecast_first_day = t.substitute(day=day1,
                                          weather_am=first_day_weather_am,
                                          weather_pm=first_day_weather_pm,
                                          tdiff_txt='',
                                          tmin=first_day_tmin,
                                          tmax=first_day_tmax)
 
-    forecast_firstDay = ''.join(forecast_firstDay.rsplit(' vrijeme', 1))
+    forecast_first_day = ''.join(forecast_first_day.rsplit(' vrijeme', 1))
 
     ### SECOND DAY ###
     ##################
@@ -170,14 +168,14 @@ def main():
 
     t = Template(content)
 
-    forecast_secondDay = t.substitute(day=day2,
+    forecast_second_day = t.substitute(day=day2,
                                       weather_am=second_day_weather_am,
                                       weather_pm=second_day_weather_pm,
                                       tdiff_txt=tdiff_txt,
                                       tmin=second_day_tmin,
                                       tmax=second_day_tmax)
 
-    forecast_secondDay = ''.join(forecast_secondDay.rsplit(' vrijeme', 1))
+    forecast_second_day = ''.join(forecast_second_day.rsplit(' vrijeme', 1))
 
     if forecastt == 'morning':
         date1 = (dt.datetime.strptime(d0, "%Y-%m-%d")).strftime("%e.%m.%Y. (%A)").strip()
@@ -191,20 +189,19 @@ def main():
 
     forecast = intro + '\n' + '\n' + \
                date1 + '\n' + \
-               forecast_firstDay + '\n' + \
+               forecast_first_day + '\n' + \
                date2 + '\n' + \
-               forecast_secondDay + '\n' + '\n' + \
+               forecast_second_day + '\n' + '\n' + \
                outro
 
     print(forecast)
 
     if develop:
-        f = open("prognoza.txt", "w+")
+        pass
     else:
         f = open("/var/www/html/meteoadriatic/ezadar/prognoza.txt", "w+")
-
-    f.write(forecast)
-    f.close()
+        f.write(forecast)
+        f.close()
 
     # Create plot
     plot_settings()
@@ -214,4 +211,4 @@ def main():
 
 
 if __name__== "__main__":
-    main()
+    run()
